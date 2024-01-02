@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+}
+
+group = 'io.github.rysefoxx'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+dependencies {
+    compileOnly('io.papermc.paper:paper-api:1.20.2-R0.1-SNAPSHOT')
+
+    implementation 'com.mysql:mysql-connector-j:8.2.0'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:3.3.2'
+    implementation 'commons-io:commons-io:2.14.0'
+
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    compileOnly 'org.projectlombok:lombok:1.18.22'
+    compileOnly 'org.jetbrains:annotations:23.1.0'
+    implementation 'com.mojang:authlib:4.0.43'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-Xlint:deprecation']
+}
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+}
+
+shadowJar {
+    mergeServiceFiles()
+}
