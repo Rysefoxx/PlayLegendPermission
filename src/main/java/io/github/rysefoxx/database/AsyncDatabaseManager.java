@@ -17,26 +17,15 @@ public class AsyncDatabaseManager {
     /***
      * Executes a runnable async. If a callback is provided, it will be called on success or failure.
      * @param runnable The runnable to execute.
-     * @param callback The callback to call on success or failure. Can be null.
      */
-    public void executeAsync(@NotNull Runnable runnable, @Nullable DatabaseCallback callback) {
+    public void executeAsync(@NotNull Runnable runnable) {
         EXECUTOR_SERVICE.submit(() -> {
             try {
                 runnable.run();
-                if (callback != null) callback.onComplete();
             } catch (Throwable throwable) {
-                if (callback != null) callback.onFailure(throwable);
+                throwable.printStackTrace();
             }
         });
-    }
-
-    /**
-     * Executes a runnable async without a callback.
-     *
-     * @param runnable The runnable to execute.
-     */
-    public void executeAsync(@NotNull Runnable runnable) {
-        executeAsync(runnable, null);
     }
 
     /**

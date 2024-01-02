@@ -13,6 +13,10 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Properties;
 
+/**
+ * @author Rysefoxx
+ * @since 02.01.2024
+ */
 public class LanguageManager {
 
     private final Plugin plugin;

@@ -4,6 +4,7 @@ import io.github.rysefoxx.command.GroupOperation;
 import io.github.rysefoxx.manager.GroupManager;
 import io.github.rysefoxx.manager.LanguageManager;
 import io.github.rysefoxx.model.GroupModel;
+import io.github.rysefoxx.util.Util;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -17,7 +18,7 @@ import java.util.Optional;
  * @since 02.01.2024
  */
 @RequiredArgsConstructor
-public class GroupCreateCommand implements GroupOperation {
+public class GroupWeightCommand implements GroupOperation {
 
     private final GroupManager groupManager;
     private final LanguageManager languageManager;
@@ -26,22 +27,22 @@ public class GroupCreateCommand implements GroupOperation {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) return false;
 
-        String name = args[1];
-        Optional<GroupModel> optional = this.groupManager.findByName(name);
-
-        if (optional.isPresent()) {
-            this.languageManager.sendTranslatedMessage(player, "group_exists");
+        if (!Util.isInteger(args[2])) {
+            this.languageManager.sendTranslatedMessage(player, "group_weight_not_integer");
             return false;
         }
 
-        if (name.length() > 20) {
-            this.languageManager.sendTranslatedMessage(player, "group_name_too_long");
+        Optional<GroupModel> optional = this.groupManager.findByName(args[1]);
+        if (optional.isEmpty()) {
+            this.languageManager.sendTranslatedMessage(player, "group_not_found");
             return false;
         }
 
-        GroupModel groupModel = new GroupModel(name, name);
+        GroupModel groupModel = optional.get();
+        groupModel.setWeight(Integer.parseInt(args[2]));
         this.groupManager.save(groupModel);
-        this.languageManager.sendTranslatedMessage(player, "group_created");
+        this.languageManager.sendTranslatedMessage(player, "group_weight_set");
         return true;
     }
+
 }

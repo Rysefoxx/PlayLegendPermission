@@ -5,20 +5,23 @@ import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnegative;
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * @author Rysefoxx
+ * @since 02.01.2024
+ */
 @Getter
+@Setter
 public class GroupModel {
 
     private final String name;
 
-    @Setter
     private String prefix;
-
-    @Setter
     private int weight = 1;
-
-//    private final List<GroupMemberModel> members = new ArrayList<>();
-//    private final List<GroupPermissionModel> permissions = new ArrayList<>();
+    private List<GroupMemberModel> members = new ArrayList<>();
+    private List<GroupPermissionModel> permissions = new ArrayList<>();
 
     /**
      * Creates a new GroupModel with no members and no permissions. This constructor is called when using the create command.

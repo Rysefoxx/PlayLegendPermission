@@ -1,8 +1,9 @@
 package io.github.rysefoxx.command;
 
-import io.github.rysefoxx.command.impl.GroupCreateCommand;
-import io.github.rysefoxx.manager.GroupManager;
-import io.github.rysefoxx.manager.LanguageManager;
+import io.github.rysefoxx.command.impl.*;
+import io.github.rysefoxx.manager.*;
+import io.github.rysefoxx.model.GroupModel;
+import io.github.rysefoxx.model.GroupPermissionModel;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -20,15 +21,21 @@ import java.util.List;
 public class CommandGroup implements CommandExecutor, TabCompleter {
 
     private final HashMap<String, GroupOperation> operations = new HashMap<>();
+    private final GroupManager groupManager;
 
-    public CommandGroup(@NotNull GroupManager groupManager, @NotNull LanguageManager languageManager) {
+    public CommandGroup(@NotNull GroupManager groupManager,
+                        @NotNull GroupMemberManager groupMemberManager,
+                        @NotNull GroupPermissionManager groupPermissionManager,
+                        @NotNull LanguageManager languageManager,
+                        @NotNull ScoreboardManager scoreboardManager) {
+        this.groupManager = groupManager;
         this.operations.put("create", new GroupCreateCommand(groupManager, languageManager));
-//        this.operations.put("delete", new GroupDeleteCommand());
-//        this.operations.put("user", new GroupUserCommand());
-//        this.operations.put("info", new GroupInformationCommand());
-//        this.operations.put("prefix", new GroupPrefixCommand());
-//        this.operations.put("permission", new GroupPermissionCommand());
-//        this.operations.put("weight", new GroupWeightCommand());
+        this.operations.put("delete", new GroupDeleteCommand(groupManager, groupMemberManager, languageManager, scoreboardManager));
+        this.operations.put("user", new GroupUserCommand(groupMemberManager, groupManager, languageManager, scoreboardManager));
+        this.operations.put("info", new GroupInformationCommand(groupMemberManager, languageManager));
+        this.operations.put("prefix", new GroupPrefixCommand(groupManager, languageManager, scoreboardManager));
+        this.operations.put("permission", new GroupPermissionCommand(groupManager, groupPermissionManager, languageManager));
+        this.operations.put("weight", new GroupWeightCommand(groupManager, languageManager));
     }
 
     @Override
@@ -54,6 +61,62 @@ public class CommandGroup implements CommandExecutor, TabCompleter {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        return null;
+        if (args.length == 1) {
+            return List.of("create", "delete", "user", "info", "prefix", "weight", "permission");
+        }
+
+        List<GroupModel> groupCache = this.groupManager.getGroupCache();
+        List<String> groupNames = groupCache.stream().map(GroupModel::getName).toList();
+
+        if (args.length == 2) {
+            switch (args[0].toLowerCase()) {
+                case "create":
+                    return List.of("<Name>");
+                case "delete":
+                case "prefix":
+                case "weight":
+                    return groupNames;
+            }
+
+            if (args[0].equalsIgnoreCase("user") || args[0].equalsIgnoreCase("permission")) {
+                return List.of("add", "remove");
+            }
+        }
+
+        if (args.length == 3) {
+            switch (args[0].toLowerCase()) {
+                case "prefix":
+                    return List.of("<Prefix>");
+                case "weight":
+                    return List.of("<Weight>");
+                case "user":
+                case "permission":
+                    return groupNames;
+            }
+        }
+
+        if (args.length == 4) {
+            switch (args[0].toLowerCase()) {
+                case "user":
+                    return null;
+                case "permission":
+                    if (args[1].equalsIgnoreCase("add")) {
+                        return List.of("<Permission>");
+                    }
+                    if (args[1].equalsIgnoreCase("remove")) {
+                        return groupCache.stream()
+                                .map(GroupModel::getPermissions)
+                                .flatMap(List::stream)
+                                .map(GroupPermissionModel::getPermission).
+                                toList();
+                    }
+            }
+        }
+
+        if (args.length == 5 && args[0].equalsIgnoreCase("user") && args[1].equalsIgnoreCase("add")) {
+            return List.of("<Dauer>");
+        }
+
+        return List.of();
     }
 }

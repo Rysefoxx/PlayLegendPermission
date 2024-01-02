@@ -5,6 +5,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+/**
+ * @author Rysefoxx
+ * @since 02.01.2024
+ */
 @Getter
 public enum Language {
 

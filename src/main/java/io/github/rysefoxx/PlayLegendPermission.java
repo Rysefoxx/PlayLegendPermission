@@ -4,11 +4,14 @@ import io.github.rysefoxx.command.CommandGroup;
 import io.github.rysefoxx.database.AsyncDatabaseManager;
 import io.github.rysefoxx.database.ConnectionManager;
 import io.github.rysefoxx.database.DatabaseTableManager;
-import io.github.rysefoxx.manager.GroupManager;
-import io.github.rysefoxx.manager.LanguageManager;
+import io.github.rysefoxx.listener.ConnectionListener;
+import io.github.rysefoxx.listener.SignListener;
+import io.github.rysefoxx.manager.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.JavaPluginLoader;
 import org.jetbrains.annotations.NotNull;
@@ -16,23 +19,32 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Objects;
 
+/**
+ * @author Rysefoxx
+ * @since 02.01.2024
+ */
 @NoArgsConstructor
 @Getter
 public class PlayLegendPermission extends JavaPlugin {
 
     @Getter
     private static boolean unitTest = false;
+
     private ConnectionManager connectionManager;
     private AsyncDatabaseManager asyncDatabaseManager;
     private DatabaseTableManager databaseTableManager;
 
     private GroupManager groupManager;
     private LanguageManager languageManager;
+    private GroupMemberManager groupMemberManager;
+    private GroupPermissionManager groupPermissionManager;
+    private ScoreboardManager scoreboardManager;
 
     @Override
     public void onEnable() {
         initializeManagers();
         initializeCommands();
+        initializeListeners();
     }
 
     @Override
@@ -59,17 +71,32 @@ public class PlayLegendPermission extends JavaPlugin {
      * Initializes all managers.
      */
     private void initializeManagers() {
-        this.languageManager = new LanguageManager(this);
-        this.connectionManager = new ConnectionManager(this);
-        this.asyncDatabaseManager = new AsyncDatabaseManager();
-        this.databaseTableManager = new DatabaseTableManager(this, this.connectionManager);
-        this.groupManager = new GroupManager(this, this.connectionManager, this.asyncDatabaseManager);
+        connectionManager = new ConnectionManager(this);
+        asyncDatabaseManager = new AsyncDatabaseManager();
+        databaseTableManager = new DatabaseTableManager(this, connectionManager);
+        languageManager = new LanguageManager(this);
+        groupPermissionManager = new GroupPermissionManager(this, connectionManager, asyncDatabaseManager);
+        groupManager = new GroupManager(this, connectionManager, asyncDatabaseManager, groupPermissionManager);
+        groupMemberManager = new GroupMemberManager(this, connectionManager, asyncDatabaseManager, groupManager, groupPermissionManager, languageManager);
+        scoreboardManager = new ScoreboardManager(groupMemberManager, languageManager);
+        groupMemberManager.setScoreboardManager(scoreboardManager);
     }
 
     /**
      * Initializes all commands.
      */
     private void initializeCommands() {
-        Objects.requireNonNull(getCommand("group")).setExecutor(new CommandGroup(this.groupManager, this.languageManager));
+        CommandGroup commandGroup = new CommandGroup(groupManager, groupMemberManager, groupPermissionManager, languageManager, scoreboardManager);
+        Objects.requireNonNull(getCommand("group")).setExecutor(commandGroup);
+        Objects.requireNonNull(getCommand("group")).setTabCompleter(commandGroup);
+    }
+
+    /**
+     * Initializes all listeners.
+     */
+    private void initializeListeners() {
+        PluginManager pluginManager = Bukkit.getPluginManager();
+        pluginManager.registerEvents(new ConnectionListener(this, groupMemberManager, groupPermissionManager, languageManager, scoreboardManager), this);
+        pluginManager.registerEvents(new SignListener(groupMemberManager), this);
     }
 }

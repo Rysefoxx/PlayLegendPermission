@@ -31,20 +31,6 @@ public class ConnectionManager {
     }
 
     /**
-     * Gets a connection from the datasource.
-     *
-     * @return The connection or null if an error occurred.
-     */
-    public @Nullable Connection getConnection() {
-        try {
-            return this.dataSource.getConnection();
-        } catch (Exception exception) {
-            this.plugin.getLogger().severe("Failed to get connection from datasource!");
-            return null;
-        }
-    }
-
-    /**
      * Closes the connection to the database.
      */
     public void closeConnection() {
@@ -133,5 +119,19 @@ public class ConnectionManager {
         }
 
         return connection.prepareStatement(query);
+    }
+
+    /**
+     * Gets a connection from the datasource.
+     *
+     * @return The connection or null if an error occurred.
+     */
+    public @Nullable Connection getConnection() {
+        try {
+            return this.dataSource.getConnection();
+        } catch (Exception exception) {
+            this.plugin.getLogger().severe("Failed to get connection from datasource!");
+            return null;
+        }
     }
 }

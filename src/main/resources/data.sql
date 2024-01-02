@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS legend.groups
 CREATE TABLE IF NOT EXISTS legend.group_member
 (
     id         BIGINT PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    uuid       BINARY(16)         NOT NULL,
+    uuid       UUID               NOT NULL,
     name       VARCHAR(20)        NOT NULL,
     expiration DATETIME           NULL,
     FOREIGN KEY (name) REFERENCES legend.groups (name)

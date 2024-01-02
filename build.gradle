@@ -26,7 +26,8 @@ dependencies {
     compileOnly 'org.jetbrains:annotations:23.1.0'
     implementation 'com.mojang:authlib:4.0.43'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
+    testImplementation 'com.github.seeseemelk:MockBukkit-v1.19:2.29.0'
 }
 
 test {

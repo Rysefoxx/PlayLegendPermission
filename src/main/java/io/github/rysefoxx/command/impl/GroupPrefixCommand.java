@@ -3,6 +3,7 @@ package io.github.rysefoxx.command.impl;
 import io.github.rysefoxx.command.GroupOperation;
 import io.github.rysefoxx.manager.GroupManager;
 import io.github.rysefoxx.manager.LanguageManager;
+import io.github.rysefoxx.manager.ScoreboardManager;
 import io.github.rysefoxx.model.GroupModel;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.command.Command;
@@ -11,37 +12,41 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
-
 /**
  * @author Rysefoxx
  * @since 02.01.2024
  */
 @RequiredArgsConstructor
-public class GroupCreateCommand implements GroupOperation {
+public class GroupPrefixCommand implements GroupOperation {
 
     private final GroupManager groupManager;
     private final LanguageManager languageManager;
+    private final ScoreboardManager scoreboardManager;
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) return false;
 
-        String name = args[1];
-        Optional<GroupModel> optional = this.groupManager.findByName(name);
-
-        if (optional.isPresent()) {
-            this.languageManager.sendTranslatedMessage(player, "group_exists");
+        Optional<GroupModel> optional = this.groupManager.findByName(args[1]);
+        if (optional.isEmpty()) {
+            this.languageManager.sendTranslatedMessage(player, "group_not_found");
             return false;
         }
 
-        if (name.length() > 20) {
-            this.languageManager.sendTranslatedMessage(player, "group_name_too_long");
-            return false;
-        }
-
-        GroupModel groupModel = new GroupModel(name, name);
+        GroupModel groupModel = optional.get();
+        groupModel.setPrefix(args[2]);
         this.groupManager.save(groupModel);
-        this.languageManager.sendTranslatedMessage(player, "group_created");
+
+        groupModel.getMembers().forEach(member -> {
+            Player target = player.getServer().getPlayer(member.getUuid());
+            if (target != null) {
+                this.scoreboardManager.update(target);
+            }
+        });
+
+        this.languageManager.sendTranslatedMessage(player, "group_prefix_set");
+
         return true;
     }
+
 }
