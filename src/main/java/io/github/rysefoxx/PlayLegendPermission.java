@@ -71,22 +71,21 @@ public class PlayLegendPermission extends JavaPlugin {
      * Initializes all managers.
      */
     private void initializeManagers() {
-        connectionManager = new ConnectionManager(this);
-        asyncDatabaseManager = new AsyncDatabaseManager();
-        databaseTableManager = new DatabaseTableManager(this, connectionManager);
-        languageManager = new LanguageManager(this);
-        groupPermissionManager = new GroupPermissionManager(this, connectionManager, asyncDatabaseManager);
-        groupManager = new GroupManager(this, connectionManager, asyncDatabaseManager, groupPermissionManager);
-        groupMemberManager = new GroupMemberManager(this, connectionManager, asyncDatabaseManager, groupManager, groupPermissionManager, languageManager);
-        scoreboardManager = new ScoreboardManager(groupMemberManager, languageManager);
-        groupMemberManager.setScoreboardManager(scoreboardManager);
+        this.connectionManager = new ConnectionManager(this);
+        this.asyncDatabaseManager = new AsyncDatabaseManager();
+        this.databaseTableManager = new DatabaseTableManager(this);
+        this.languageManager = new LanguageManager(this);
+        this.groupPermissionManager = new GroupPermissionManager(this);
+        this.groupManager = new GroupManager(this);
+        this.groupMemberManager = new GroupMemberManager(this);
+        this.scoreboardManager = new ScoreboardManager(this);
     }
 
     /**
      * Initializes all commands.
      */
     private void initializeCommands() {
-        CommandGroup commandGroup = new CommandGroup(groupManager, groupMemberManager, groupPermissionManager, languageManager, scoreboardManager);
+        CommandGroup commandGroup = new CommandGroup(this);
         Objects.requireNonNull(getCommand("group")).setExecutor(commandGroup);
         Objects.requireNonNull(getCommand("group")).setTabCompleter(commandGroup);
     }
@@ -96,7 +95,7 @@ public class PlayLegendPermission extends JavaPlugin {
      */
     private void initializeListeners() {
         PluginManager pluginManager = Bukkit.getPluginManager();
-        pluginManager.registerEvents(new ConnectionListener(this, groupMemberManager, groupPermissionManager, languageManager, scoreboardManager), this);
-        pluginManager.registerEvents(new SignListener(groupMemberManager), this);
+        pluginManager.registerEvents(new ConnectionListener(this), this);
+        pluginManager.registerEvents(new SignListener(this.groupMemberManager), this);
     }
 }

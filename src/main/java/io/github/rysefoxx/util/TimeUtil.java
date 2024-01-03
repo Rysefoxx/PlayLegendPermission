@@ -73,7 +73,9 @@ public class TimeUtil {
      * @param localDateTime The LocalDateTime to convert.
      * @return The readable string in the format "dd.MM.yyyy HH:mm:ss".
      */
-    public @NotNull String toReadableString(@NotNull LocalDateTime localDateTime) {
+    public @NotNull String toReadableString(@Nullable LocalDateTime localDateTime) {
+        if(localDateTime == null) return "Permanent";
+
         return localDateTime.format(DATE_TIME_FORMATTER);
     }
 }

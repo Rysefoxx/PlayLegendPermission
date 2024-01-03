@@ -25,14 +25,21 @@ import java.util.logging.Level;
  * @author Rysefoxx
  * @since 02.01.2024
  */
-@RequiredArgsConstructor
 public class ConnectionListener implements Listener {
 
-    private final Plugin plugin;
+    private final PlayLegendPermission plugin;
     private final GroupMemberManager groupMemberManager;
     private final GroupPermissionManager groupPermissionManager;
     private final LanguageManager languageManager;
     private final ScoreboardManager scoreboardManager;
+
+    public ConnectionListener(@NotNull PlayLegendPermission plugin) {
+        this.plugin = plugin;
+        this.groupMemberManager = plugin.getGroupMemberManager();
+        this.groupPermissionManager = plugin.getGroupPermissionManager();
+        this.languageManager = plugin.getLanguageManager();
+        this.scoreboardManager = plugin.getScoreboardManager();
+    }
 
     @EventHandler
     public void onJoin(@NotNull PlayerJoinEvent event) {

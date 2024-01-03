@@ -23,9 +23,9 @@ public class DatabaseTableManager {
     private final PlayLegendPermission plugin;
     private final ConnectionManager connectionManager;
 
-    public DatabaseTableManager(@NotNull PlayLegendPermission plugin, @NotNull ConnectionManager connectionManager) {
+    public DatabaseTableManager(@NotNull PlayLegendPermission plugin) {
         this.plugin = plugin;
-        this.connectionManager = connectionManager;
+        this.connectionManager = plugin.getConnectionManager();
         createDefaultTables();
     }
 

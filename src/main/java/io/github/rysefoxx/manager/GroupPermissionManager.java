@@ -33,10 +33,10 @@ public class GroupPermissionManager {
     private final AsyncDatabaseManager asyncDatabaseManager;
     private final HashMap<UUID, PermissionAttachment> attachments = new HashMap<>();
 
-    public GroupPermissionManager(@NotNull PlayLegendPermission plugin, @NotNull ConnectionManager connectionManager, AsyncDatabaseManager asyncDatabaseManager) {
+    public GroupPermissionManager(@NotNull PlayLegendPermission plugin) {
         this.plugin = plugin;
-        this.connectionManager = connectionManager;
-        this.asyncDatabaseManager = asyncDatabaseManager;
+        this.connectionManager = plugin.getConnectionManager();
+        this.asyncDatabaseManager = plugin.getAsyncDatabaseManager();
     }
 
     /**
@@ -176,40 +176,5 @@ public class GroupPermissionManager {
                 this.plugin.getLogger().log(Level.SEVERE, "Failed to delete groups permission " + groupModel.getName() + " to database!", e);
             }
         });
-    }
-
-    /**
-     * This method is executed synchronously as it is only executed once when the server is started and not during runtime when users are on the server.
-     *
-     * @param groupModel The group to cache all group permissions
-     * @return A list of all group permissions. Cant be null.
-     */
-    public @NotNull List<GroupPermissionModel> findAllByGroupName(@NotNull GroupModel groupModel) {
-        List<GroupPermissionModel> groupPermissionModels = new ArrayList<>();
-        try (Connection connection = this.connectionManager.getConnection();
-             PreparedStatement preparedStatement = this.connectionManager.prepareStatement(connection, "SELECT id, permission FROM legend.group_permission WHERE name = ?")) {
-            if (preparedStatement == null) {
-                this.plugin.getLogger().severe("Failed to load group_permission from database, because the prepared statement is null!");
-                return groupPermissionModels;
-            }
-
-            preparedStatement.setString(1, groupModel.getName());
-
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    long id = resultSet.getLong("id");
-                    String permission = resultSet.getString("permission");
-
-                    GroupPermissionModel groupPermissionModel = new GroupPermissionModel(id, permission, groupModel);
-                    groupPermissionModels.add(groupPermissionModel);
-
-                    this.plugin.getLogger().info("Loaded group permission " + permission + " for group " + groupModel.getName() + " from database!");
-                }
-            }
-        } catch (SQLException e) {
-            this.plugin.getLogger().log(Level.SEVERE, "Failed to load group permissions from database!", e);
-        }
-
-        return groupPermissionModels;
     }
 }

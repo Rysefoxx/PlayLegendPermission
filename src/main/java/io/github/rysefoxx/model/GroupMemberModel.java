@@ -1,5 +1,6 @@
 package io.github.rysefoxx.model;
 
+import io.github.rysefoxx.util.TimeUtil;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,5 +49,14 @@ public class GroupMemberModel {
         this.uuid = uuid;
         this.expiration = expiration;
         this.group = group;
+    }
+
+    @Override
+    public String toString() {
+        return "GroupMemberModel{" +
+                "id=" + id +
+                ", uuid=" + uuid +
+                ", expiration=" + TimeUtil.toReadableString(expiration) +
+                '}';
     }
 }

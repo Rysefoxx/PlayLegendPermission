@@ -46,4 +46,41 @@ public class GroupModel {
         this.prefix = prefix;
         this.weight = weight;
     }
+
+    @Override
+    public String toString() {
+        return "GroupModel{" +
+                "name='" + name + '\'' +
+                ", prefix='" + prefix + '\'' +
+                ", weight=" + weight +
+                ", members=" + formatMembers() +
+                ", permissions=" + formatPermissions() +
+                '}';
+    }
+
+    /**
+     * Formats the permissions of the group to a readable string.
+     *
+     * @return The formatted permissions
+     */
+    private @NotNull String formatPermissions() {
+        StringBuilder permissions = new StringBuilder();
+        for (GroupPermissionModel permission : this.permissions) {
+            permissions.append(permission.getPermission()).append(", ");
+        }
+        return permissions.toString();
+    }
+
+    /**
+     * Formats the members of the group to a readable string.
+     *
+     * @return The formatted members
+     */
+    private @NotNull String formatMembers() {
+        StringBuilder members = new StringBuilder();
+        for (GroupMemberModel member : this.members) {
+            members.append(member.toString()).append(", ");
+        }
+        return members.toString();
+    }
 }

@@ -1,5 +1,6 @@
 package io.github.rysefoxx.command;
 
+import io.github.rysefoxx.PlayLegendPermission;
 import io.github.rysefoxx.command.impl.*;
 import io.github.rysefoxx.manager.*;
 import io.github.rysefoxx.model.GroupModel;
@@ -23,12 +24,13 @@ public class CommandGroup implements CommandExecutor, TabCompleter {
     private final HashMap<String, GroupOperation> operations = new HashMap<>();
     private final GroupManager groupManager;
 
-    public CommandGroup(@NotNull GroupManager groupManager,
-                        @NotNull GroupMemberManager groupMemberManager,
-                        @NotNull GroupPermissionManager groupPermissionManager,
-                        @NotNull LanguageManager languageManager,
-                        @NotNull ScoreboardManager scoreboardManager) {
-        this.groupManager = groupManager;
+    public CommandGroup(@NotNull PlayLegendPermission plugin) {
+        LanguageManager languageManager = plugin.getLanguageManager();
+        GroupMemberManager groupMemberManager = plugin.getGroupMemberManager();
+        GroupPermissionManager groupPermissionManager = plugin.getGroupPermissionManager();
+        ScoreboardManager scoreboardManager = plugin.getScoreboardManager();
+
+        this.groupManager = plugin.getGroupManager();
         this.operations.put("create", new GroupCreateCommand(groupManager, languageManager));
         this.operations.put("delete", new GroupDeleteCommand(groupManager, groupMemberManager, languageManager, scoreboardManager));
         this.operations.put("user", new GroupUserCommand(groupMemberManager, groupManager, languageManager, scoreboardManager));

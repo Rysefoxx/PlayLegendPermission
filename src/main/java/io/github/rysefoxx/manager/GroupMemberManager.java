@@ -33,21 +33,14 @@ public class GroupMemberManager {
     private final GroupManager groupManager;
     private final GroupPermissionManager groupPermissionService;
     private final LanguageManager languageManager;
-    @Setter
-    private ScoreboardManager scoreboardManager;
 
-    public GroupMemberManager(@NotNull PlayLegendPermission plugin,
-                              @NotNull ConnectionManager connectionManager,
-                              @NotNull AsyncDatabaseManager asyncDatabaseManager,
-                              @NotNull GroupManager groupManager,
-                              @NotNull GroupPermissionManager groupPermissionService,
-                              @NotNull LanguageManager languageManager) {
+    public GroupMemberManager(@NotNull PlayLegendPermission plugin) {
         this.plugin = plugin;
-        this.connectionManager = connectionManager;
-        this.asyncDatabaseManager = asyncDatabaseManager;
-        this.groupManager = groupManager;
-        this.groupPermissionService = groupPermissionService;
-        this.languageManager = languageManager;
+        this.connectionManager = plugin.getConnectionManager();
+        this.asyncDatabaseManager = plugin.getAsyncDatabaseManager();
+        this.groupManager = plugin.getGroupManager();
+        this.groupPermissionService = plugin.getGroupPermissionManager();
+        this.languageManager = plugin.getLanguageManager();
         scheduler();
     }
 
@@ -64,7 +57,7 @@ public class GroupMemberManager {
 
                 addToDefaultGroup(onlinePlayer.getUniqueId());
                 this.languageManager.sendTranslatedMessage(onlinePlayer, "group_user_expired");
-                this.scoreboardManager.update(onlinePlayer);
+                this.plugin.getScoreboardManager().update(onlinePlayer);
                 this.plugin.getLogger().info("Removed " + onlinePlayer.getName() + " from group " + groupModel.getName() + " because the group expired!");
             }
         }, 0L, 20L);
@@ -241,8 +234,9 @@ public class GroupMemberManager {
 
     /**
      * Deletes a {@link GroupMemberModel} async from the database.
+     *
      * @param groupModel The {@link GroupModel} to delete.
-     * @param uuid The {@link UUID} to delete.
+     * @param uuid       The {@link UUID} to delete.
      */
     public void delete(@NotNull GroupModel groupModel, @NotNull UUID uuid) {
         this.asyncDatabaseManager.executeAsync(() -> {

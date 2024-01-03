@@ -6,7 +6,6 @@ import io.github.rysefoxx.scoreboard.AbstractScoreboard;
 import io.github.rysefoxx.scoreboard.ScoreboardEntry;
 import io.github.rysefoxx.scoreboard.enums.ScoreboardPredefinedValue;
 import io.github.rysefoxx.scoreboard.impl.DefaultScoreboard;
-import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -22,7 +21,6 @@ import java.util.UUID;
  * @author Rysefoxx
  * @since 02.01.2024
  */
-@RequiredArgsConstructor
 public class ScoreboardManager {
 
     private final HashMap<UUID, AbstractScoreboard> playerScoreboard = new HashMap<>();
@@ -30,6 +28,11 @@ public class ScoreboardManager {
 
     private final GroupMemberManager groupMemberManager;
     private final LanguageManager languageManager;
+
+    public ScoreboardManager(@NotNull PlayLegendPermission plugin) {
+        this.groupMemberManager = plugin.getGroupMemberManager();
+        this.languageManager = plugin.getLanguageManager();
+    }
 
     /**
      * Creates a scoreboard for a player. When the player already has a scoreboard, nothing will happen.

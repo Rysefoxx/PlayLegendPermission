@@ -5,6 +5,7 @@ import io.github.rysefoxx.database.AsyncDatabaseManager;
 import io.github.rysefoxx.database.ConnectionManager;
 import io.github.rysefoxx.model.GroupMemberModel;
 import io.github.rysefoxx.model.GroupModel;
+import io.github.rysefoxx.model.GroupPermissionModel;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,10 +14,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
@@ -28,19 +26,14 @@ public class GroupManager {
     private final PlayLegendPermission plugin;
     private final ConnectionManager connectionManager;
     private final AsyncDatabaseManager asyncDatabaseManager;
-    private final GroupPermissionManager groupPermissionManager;
 
     @Getter
     private final List<GroupModel> groupCache = new ArrayList<>();
 
-    public GroupManager(@NotNull PlayLegendPermission plugin,
-                        @NotNull ConnectionManager connectionManager,
-                        @NotNull AsyncDatabaseManager asyncDatabaseManager,
-                        @NotNull GroupPermissionManager groupPermissionManager) {
+    public GroupManager(@NotNull PlayLegendPermission plugin) {
         this.plugin = plugin;
-        this.connectionManager = connectionManager;
-        this.asyncDatabaseManager = asyncDatabaseManager;
-        this.groupPermissionManager = groupPermissionManager;
+        this.connectionManager = plugin.getConnectionManager();
+        this.asyncDatabaseManager = plugin.getAsyncDatabaseManager();
         onLoad();
     }
 
@@ -56,31 +49,55 @@ public class GroupManager {
      * Loads all groups from the database and saves them in the cache.
      */
     private void cacheAllGroups() {
+        String query = "SELECT g.name, g.prefix, g.weight, " +
+                "gm.id as member_id, gm.uuid as member_uuid, gm.expiration as member_expiration, " +
+                "gp.id as permission_id, gp.permission " +
+                "FROM legend.groups g " +
+                "LEFT JOIN legend.group_member gm ON g.name = gm.name " +
+                "LEFT JOIN legend.group_permission gp ON g.name = gp.name";
+
         try (Connection connection = this.connectionManager.getConnection();
-             PreparedStatement preparedStatement = this.connectionManager.prepareStatement(connection, "SELECT * FROM legend.groups")) {
+             PreparedStatement preparedStatement = this.connectionManager.prepareStatement(connection, query)) {
             if (preparedStatement == null) {
                 this.plugin.getLogger().severe("Failed to load groups from database, because the prepared statement is null!");
                 return;
             }
+
+            Map<String, GroupModel> groupMap = new HashMap<>();
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     String name = resultSet.getString("name");
                     String prefix = resultSet.getString("prefix");
                     int weight = resultSet.getInt("weight");
+                    GroupModel groupModel = groupMap.computeIfAbsent(name, k -> new GroupModel(name, prefix, weight));
 
-                    GroupModel groupModel = new GroupModel(name, prefix, weight);
-                    groupModel.setMembers(findGroupMembers(groupModel));
-                    groupModel.setPermissions(this.groupPermissionManager.findAllByGroupName(groupModel));
+                    if (resultSet.getObject("member_uuid") != null) {
+                        UUID uuid = (UUID) resultSet.getObject("member_uuid");
+                        LocalDateTime expiration = resultSet.getObject("member_expiration", LocalDateTime.class);
+                        GroupMemberModel member = new GroupMemberModel(resultSet.getLong("member_id"), uuid, expiration, groupModel);
+                        groupModel.getMembers().add(member);
+                    }
 
-                    this.groupCache.add(groupModel);
-                    this.plugin.getLogger().info("Loaded group " + name + " from database!");
+                    if (resultSet.getString("permission") != null) {
+                        GroupPermissionModel permission = new GroupPermissionModel(resultSet.getLong("permission_id"), resultSet.getString("permission"), groupModel);
+                        groupModel.getPermissions().add(permission);
+                    }
                 }
+            } catch (SQLException e) {
+                this.plugin.getLogger().log(Level.SEVERE, "Failed to load groups from database!", e);
             }
+
+            groupMap.values().forEach(groupModel -> {
+                this.groupCache.add(groupModel);
+                this.plugin.getLogger().info("Loaded group " + groupModel.toString() + " from database!");
+            });
+
         } catch (SQLException e) {
             this.plugin.getLogger().log(Level.SEVERE, "Failed to load groups from database!", e);
         }
     }
+
 
     /**
      * Creates the default group if it does not exist.
@@ -154,41 +171,5 @@ public class GroupManager {
                 this.plugin.getLogger().log(Level.SEVERE, "Failed to remove group " + groupModel.getName() + " from database!", e);
             }
         });
-    }
-
-    /**
-     * This method is executed synchronously as it is only executed once when the server is started and not during runtime when users are on the server.
-     *
-     * @param groupModel The group to cache all group members
-     * @return A list of all group members. Cant be null.
-     */
-    private @NotNull List<GroupMemberModel> findGroupMembers(@NotNull GroupModel groupModel) {
-        List<GroupMemberModel> groupMemberModels = new ArrayList<>();
-        try (Connection connection = this.connectionManager.getConnection();
-             PreparedStatement preparedStatement = this.connectionManager.prepareStatement(connection, "SELECT id, uuid, expiration FROM legend.group_member WHERE name = ?")) {
-            if (preparedStatement == null) {
-                this.plugin.getLogger().severe("Failed to load groups_members from database, because the prepared statement is null!");
-                return groupMemberModels;
-            }
-
-            preparedStatement.setString(1, groupModel.getName());
-
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    long id = resultSet.getLong("id");
-                    UUID uuid = resultSet.getObject("uuid", UUID.class);
-                    LocalDateTime expiration = resultSet.getObject("expiration", LocalDateTime.class);
-
-                    GroupMemberModel groupMemberModel = new GroupMemberModel(id, uuid, expiration, groupModel);
-                    groupMemberModels.add(groupMemberModel);
-
-                    this.plugin.getLogger().info("Loaded group member " + uuid + " with id " + id + " from database!");
-                }
-            }
-        } catch (SQLException e) {
-            this.plugin.getLogger().log(Level.SEVERE, "Failed to load group members from database!", e);
-        }
-
-        return groupMemberModels;
     }
 }
